@@ -35,7 +35,7 @@ public class CollatorExtendedLogging extends CollatorLogging{
 		tableDef.addTableItem(buoyLatitude = new PamTableItem("buoyLatitude", Types.DOUBLE)); 
 		tableDef.addTableItem(buoyLongitude = new PamTableItem("buoyLongitude", Types.DOUBLE)); 
 		tableDef.addTableItem(buoyId = new PamTableItem("buoyId", Types.CHAR,10)); 
-		tableDef.addTableItem(clipBinaryFileName = new PamTableItem("buoyId", Types.CHAR,100)); 
+		tableDef.addTableItem(clipBinaryFileName = new PamTableItem("clipBinaryFileName", Types.CHAR,100)); 
 
 		tableDef.addTableItem(detectionUID = new PamTableItem("detectionUID", Types.BIGINT)); 
 		tableDef.addTableItem(hasBearing = new PamTableItem("hasBearing", Types.BOOLEAN)); 
