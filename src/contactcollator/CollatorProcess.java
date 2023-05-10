@@ -9,6 +9,8 @@ import PamController.PamController;
 import PamUtils.PamUtils;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamProcess;
+import clipgenerator.ClipProcess;
+import contactcollator.io.CollatorBinaryStorage;
 import contactcollator.io.CollatorLogging;
 import contactcollator.swing.CollatorOverlayGraphics;
 
@@ -21,11 +23,12 @@ public class CollatorProcess extends PamProcess {
 	private ArrayList<CollatorStreamProcess> streamProcesses = new ArrayList<>();
 
 	public CollatorProcess(CollatorControl collatorControl) {
-		super(collatorControl, null);
+		super(collatorControl,null);
 		this.collatorControl = collatorControl;
 		collatorDataBlock = new CollatorDataBlock(collatorControl.getUnitName(), this, 0);
 		collatorDataBlock.setOverlayDraw(new CollatorOverlayGraphics(collatorDataBlock));
-		collatorDataBlock.SetLogging(new CollatorLogging(collatorControl, collatorDataBlock));
+		collatorDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, collatorDataBlock));
+		collatorDataBlock.setBinaryDataSource(new CollatorBinaryStorage(collatorControl,collatorDataBlock));
 		addOutputDataBlock(collatorDataBlock);
 	}
 
@@ -117,6 +120,10 @@ public class CollatorProcess extends PamProcess {
 		}
 		catch(NullPointerException e) {} 
 		return null;
+	}
+	
+	public ArrayList<CollatorStreamProcess> getStreamProcesses(){
+		return streamProcesses;
 	}
 
 	/**

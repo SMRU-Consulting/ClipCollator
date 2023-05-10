@@ -14,6 +14,11 @@ import PamguardMVC.PamObserver;
 import PamguardMVC.PamProcess;
 import PamguardMVC.PamRawDataBlock;
 import PamguardMVC.dataSelector.DataSelector;
+import clipgenerator.ClipDataUnit;
+import clipgenerator.ClipDisplayDataBlock;
+import clipgenerator.clipDisplay.ClipDisplayDecorations;
+import clipgenerator.clipDisplay.ClipDisplayParent;
+import clipgenerator.clipDisplay.ClipDisplayUnit;
 import contactcollator.bearings.BearingSummariser;
 import contactcollator.bearings.BearingSummary;
 import contactcollator.bearings.BearingSummaryLocalisation;
@@ -260,7 +265,7 @@ public class CollatorStreamProcess extends PamProcess {
 			if (channelSamples[i] > allocatedSamples) {
 				// keep the end, skip the start
 				int skipSamples = channelSamples[i]-allocatedSamples;
-				clipStartMillis += skipSamples * 1000 / fs;
+				clipStartMillis += skipSamples * 1000.0 / fs;
 				wavData[i] = Arrays.copyOfRange(wavData[i], channelSamples[i]-allocatedSamples, channelSamples[i]);
 			}
 			else if (channelSamples[i] < allocatedSamples) {

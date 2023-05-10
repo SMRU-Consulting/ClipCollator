@@ -1,5 +1,11 @@
 package contactcollator;
 
+import java.util.ArrayList;
+import java.util.ListIterator;
+
+import PamController.PamController;
+import PamguardMVC.PamDataBlock;
+import PamguardMVC.PamDataUnit;
 import PamguardMVC.RawDataHolder;
 import PamguardMVC.RawDataTransforms;
 import clipgenerator.ClipDataUnit;
@@ -27,6 +33,8 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 	private String streamName;
 	
 	private HeadingHistogram headingHistogram;
+	
+	private ArrayList<Long> triggerUTCs;
 
 	/**
 	 * Real time constructor
@@ -107,6 +115,10 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 	public CollatorTriggerData getTriggerData() {
 		return triggerData;
 	}
+	
+	public void setTriggerData(CollatorTriggerData triggerData) {
+		this.triggerData = triggerData;
+	}
 
 	/**
 	 * @return the streamName
@@ -127,6 +139,96 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 	 */
 	public void setHeadingHistogram(HeadingHistogram headingHistogram) {
 		this.headingHistogram = headingHistogram;
+	}
+	
+	public void setTriggerUTCs(ArrayList<Long> trigTimes) {
+		this.triggerUTCs = trigTimes;
+	}
+	
+	public CollatorTriggerData findTriggerData() {
+		if (triggerData != null) {
+			return triggerData;
+		}
+		
+		String trigName = this.triggerName;
+		long trigMillis = this.triggerMilliseconds;
+//		long startMillis = clipDataUnit.getTimeMilliseconds();
+		PamDataBlock<PamDataUnit> dataBlock = findTriggerDataBlock(trigName);
+		if (dataBlock == null) {
+			return null;
+		}
+		return triggerData = findTriggerData2(triggerUTCs,dataBlock, 20);
+	}
+	
+	private CollatorTriggerData findTriggerData2(ArrayList<Long> trigTimes, PamDataBlock<PamDataUnit> dataBlock, int timeJitter) {
+		long t1;
+		long t2;
+		
+		ArrayList<PamDataUnit> detectorData = new ArrayList<PamDataUnit>();
+
+		if(trigTimes==null) {
+			return null;
+		}
+		
+		synchronized (dataBlock.getSynchLock()) {
+			ListIterator<PamDataUnit> iter = dataBlock.getListIterator(PamDataBlock.ITERATOR_END);
+			while (iter.hasPrevious()) {
+				
+				for(long nextTrigTime:trigTimes) {
+					t1 = nextTrigTime - timeJitter;
+					t2 = nextTrigTime + timeJitter;
+					PamDataUnit trigUnit = iter.previous();
+					long trigTime = trigUnit.getTimeMilliseconds();
+					if (trigTime >= t1 && trigTime <= t2 && (trigUnit.getChannelBitmap() & this.getChannelBitmap()) != 0) {
+						detectorData.add(trigUnit);
+					}
+				}
+				
+				
+			}
+			
+		}
+		return new CollatorTriggerData(min(trigTimes),max(trigTimes),dataBlock.getLongDataName(),detectorData);
+
+	}
+	
+	private String lastFoundName;
+	private PamDataBlock<PamDataUnit> lastFoundBlock;
+	
+	public PamDataBlock<PamDataUnit> findTriggerDataBlock(String dataName){
+		if (dataName == null) {
+			return null;
+		}
+		if (dataName.equals(lastFoundName)) {
+			return lastFoundBlock;
+		}
+		PamDataBlock<PamDataUnit> dataBlock = PamController.getInstance().getDetectorDataBlock(dataName);
+		if (dataBlock == null) {
+			return null;
+		}
+		lastFoundName = new String(dataName);
+		lastFoundBlock = dataBlock;
+		return dataBlock;
+	}
+	
+	private long min(ArrayList<Long> arr) {
+		long min=arr.get(0);
+		for(long el:arr) {
+			if(el<min) {
+				min=el;
+			}
+		}
+		return min;
+	}
+	
+	private long max(ArrayList<Long> arr) {
+		long max=arr.get(0);
+		for(long el:arr) {
+			if(el>max) {
+				max=el;
+			}
+		}
+		return max;
 	}
 
 }
