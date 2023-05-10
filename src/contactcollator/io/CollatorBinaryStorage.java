@@ -103,7 +103,12 @@ public class CollatorBinaryStorage extends BinaryDataSource {
 //			dos.writeLong(trigUnit == null ? 0 : trigUnit.getUID());
 			dos.writeFloat(collatorDataUnit.getSourceSampleRate());
 			CollatorTriggerData triggerData = collatorDataUnit.getTriggerData();
-			List<PamDataUnit> triggerList = triggerData.getDataList(); // does this need synchronising? OK if we don't use an iterator, so what if it grows!
+			List<PamDataUnit> triggerList;
+			if(triggerData!=null) {
+				triggerList = triggerData.getDataList(); // does this need synchronising? OK if we don't use an iterator, so what if it grows!
+			}else {
+				triggerList = null;
+			}
 			int nTrig = triggerList != null ? triggerList.size() : 0;
 			dos.writeShort(nTrig);			
 			for (int i = 0; i < nTrig; i++) {
