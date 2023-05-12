@@ -22,7 +22,7 @@ import contactcollator.trigger.CollatorTriggerData;
  * @author dg50
  *
  */
-public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
+public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Cloneable {
 		
 	private CollatorTriggerData triggerData;
 	
@@ -35,6 +35,10 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 	private HeadingHistogram headingHistogram;
 	
 	private ArrayList<Long> triggerUTCs;
+	
+	private String speciesID;
+	
+	private String binaryFileName;
 
 	/**
 	 * Real time constructor
@@ -74,6 +78,10 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 			rawDataTransforms = new RawDataTransforms(this, this);
 		}
 		return rawDataTransforms;
+	}
+	
+	public void setDataTransforms(RawDataTransforms rawDataTransforms) {
+		this.rawDataTransforms = rawDataTransforms;
 	}
 
 	/**
@@ -134,6 +142,22 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 		return headingHistogram;
 	}
 
+	public String getSpeciesID() {
+		return speciesID;
+	}
+
+	public String getBinaryFileName() {
+		return binaryFileName;
+	}
+
+	public void setBinaryFileName(String binaryFileName) {
+		this.binaryFileName = binaryFileName;
+	}
+
+	public void setSpeciesID(String speciesID) {
+		this.speciesID = speciesID;
+	}
+
 	/**
 	 * @param headingHistogram the headingHistogram to set
 	 */
@@ -183,10 +207,7 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 						detectorData.add(trigUnit);
 					}
 				}
-				
-				
 			}
-			
 		}
 		return new CollatorTriggerData(min(trigTimes),max(trigTimes),dataBlock.getLongDataName(),detectorData);
 
@@ -229,6 +250,24 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder {
 			}
 		}
 		return max;
+	}
+	
+	public CollatorDataUnit clone() {
+		CollatorDataUnit newUnit = new CollatorDataUnit(this.getTimeMilliseconds(),
+				this.getChannelBitmap(),
+				this.getStartSample(),
+				this.getSampleRate(),
+				this.getSampleDuration().intValue(),
+				this.getTriggerData(),
+				this.getStreamName(),
+				this.getWaveData());
+		newUnit.setUID(this.getUID());
+		newUnit.setDataTransforms(this.getDataTransforms());
+		newUnit.setBearingSummary(this.getBearingSummaryLocalisation());
+		newUnit.setHeadingHistogram(this.getHeadingHistogram());
+		newUnit.setTriggerUTCs(this.triggerUTCs);
+		return newUnit;
+		
 	}
 
 }

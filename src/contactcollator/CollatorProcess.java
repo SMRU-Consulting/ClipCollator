@@ -8,11 +8,18 @@ import PamController.PamControlledUnit;
 import PamController.PamController;
 import PamUtils.PamUtils;
 import PamguardMVC.PamDataBlock;
+import PamguardMVC.PamDataUnit;
+import PamguardMVC.PamObservable;
 import PamguardMVC.PamProcess;
-import clipgenerator.ClipProcess;
+import PamguardMVC.superdet.SubdetectionInfo;
+import annotation.DataAnnotation;
 import contactcollator.io.CollatorBinaryStorage;
-import contactcollator.io.CollatorLogging;
 import contactcollator.swing.CollatorOverlayGraphics;
+import detectiongrouplocaliser.DetectionGroupControl;
+import detectiongrouplocaliser.DetectionGroupDataBlock;
+import detectiongrouplocaliser.DetectionGroupDataUnit;
+import detectiongrouplocaliser.EventBuilderFunctions;
+
 
 public class CollatorProcess extends PamProcess {
 
@@ -20,7 +27,12 @@ public class CollatorProcess extends PamProcess {
 	
 	private CollatorDataBlock collatorDataBlock;
 	
+	private AnnotatedCollationDataBlock annotatedDataBlock;
+	
 	private ArrayList<CollatorStreamProcess> streamProcesses = new ArrayList<>();
+	
+	DetectionGroupDataBlock detGroupDataBlock;
+		
 
 	public CollatorProcess(CollatorControl collatorControl) {
 		super(collatorControl,null);
@@ -30,8 +42,49 @@ public class CollatorProcess extends PamProcess {
 		collatorDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, collatorDataBlock));
 		collatorDataBlock.setBinaryDataSource(new CollatorBinaryStorage(collatorControl,collatorDataBlock));
 		addOutputDataBlock(collatorDataBlock);
+		
+	}
+	
+	public void addAnnotation(PamDataUnit newUnit,DetectionGroupDataUnit detGroupDu) {
+		CollatorDataUnit annotatedCollatorUnit;
+ 		if(!(newUnit instanceof CollatorDataUnit)) {
+ 			return;
+ 		}else {
+ 			annotatedCollatorUnit = ((CollatorDataUnit) newUnit).clone();
+ 		}
+		 if(newUnit.getParentDataBlock().getBinaryDataSource()!=null && newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream()!=null) {
+			 annotatedCollatorUnit.setBinaryFileName(newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream().getMainFileName());
+		 }
+ 		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
+ 		if(!ann.toString().equals("FALSE")) {
+ 			annotatedCollatorUnit.setSpeciesID(ann.toString());
+ 	 		annotatedDataBlock.addPamData(annotatedCollatorUnit);
+ 		}
 	}
 
+	
+	@Override
+	public void updateData(PamObservable observable, PamDataUnit pamDataUnit) {
+		if(!(pamDataUnit instanceof DetectionGroupDataUnit)) {
+			return;
+		}
+		DetectionGroupDataUnit du = (DetectionGroupDataUnit) pamDataUnit;
+		PamDataUnit u;
+		ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections = du.getLastAddedSubDetections();
+		for(SubdetectionInfo<PamDataUnit> nextInfo : lastAddedSubDetections) {
+			addAnnotation(nextInfo.getSubDetection(),du);
+		}
+		
+	}
+	
+	@Override
+	public void newData(PamObservable observable, PamDataUnit pamDataUnit) {
+		if(!(pamDataUnit instanceof DetectionGroupDataUnit)) {
+			return;
+		}
+		updateData(observable,pamDataUnit);
+	}
+	
 	@Override
 	public void pamStart() {
 		
@@ -45,6 +98,8 @@ public class CollatorProcess extends PamProcess {
 	@Override
 	public void setupProcess() {
 		super.setupProcess();
+		
+		
 		/*
 		 *  could have anything in it, so set the channel map to the acquisition map.
 		 *  However, this may not be subscribed to a process, so go to the array ?
@@ -54,6 +109,23 @@ public class CollatorProcess extends PamProcess {
 		collatorDataBlock.setChannelMap(hydrophoneMap);
 		// sample rate is tricky, since it's going to be variable, so can't really use that !
 		
+		if(collatorControl.getCollatorParams().listenForAnnotations) {
+			
+			annotatedDataBlock = new AnnotatedCollationDataBlock("Annotated_Detections",this,0);
+			annotatedDataBlock.setOverlayDraw(new CollatorOverlayGraphics(annotatedDataBlock));
+			annotatedDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, annotatedDataBlock));
+			annotatedDataBlock.setChannelMap(hydrophoneMap);
+
+			addOutputDataBlock(annotatedDataBlock);
+			
+			PamDataBlock block = PamController.getInstance().getDataBlockByLongName(collatorControl.getCollatorParams().detectionGroupSource);
+			
+			if(block!=null && block instanceof DetectionGroupDataBlock) {
+				detGroupDataBlock =  (DetectionGroupDataBlock) block;
+				detGroupDataBlock.addObserver(this);
+			}
+		}
+		
 		organiseStreamProcesses();
 		
 		// set the parent process of the main output datablock (i.e. the parent of this) to be the first 
@@ -62,6 +134,8 @@ public class CollatorProcess extends PamProcess {
 		if (daq != null) {
 			setParentDataBlock(daq.getRawDataBlock());
 		}
+		
+	
 	}
 
 	@Override
@@ -133,6 +207,7 @@ public class CollatorProcess extends PamProcess {
 		return collatorDataBlock;
 	}
 
-
+	
+	
 
 }

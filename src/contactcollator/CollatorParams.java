@@ -5,12 +5,17 @@ import java.util.ArrayList;
 
 import PamModel.parametermanager.ManagedParameters;
 import PamModel.parametermanager.PamParameterSet;
+import detectiongrouplocaliser.DetectionGroupDataBlock;
 
 public class CollatorParams implements ManagedParameters, Cloneable, Serializable {
 
 	public static final long serialVersionUID = 1L;
 	
 	public ArrayList<CollatorParamSet> parameterSets = new ArrayList();
+	
+	public boolean listenForAnnotations=false;
+	
+	public String detectionGroupSource = null;
 	
 	public int getNParameterSets() {
 		return parameterSets.size();

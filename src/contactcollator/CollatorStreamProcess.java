@@ -7,6 +7,7 @@ import java.util.List;
 import PamController.PamController;
 import PamDetection.RawDataUnit;
 import PamUtils.PamUtils;
+import PamView.paneloverlay.overlaymark.OverlayMarkObservers;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.PamObservable;
@@ -63,6 +64,8 @@ public class CollatorStreamProcess extends PamProcess {
 		collatorRateFilter = new CollatorRateFilter();
 		
 		headingHistogram = new HeadingHistogram(24, true);
+		
+		
 	}
 
 	@Override

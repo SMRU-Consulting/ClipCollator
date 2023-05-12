@@ -6,6 +6,7 @@ import Array.ArrayManager;
 import Array.Streamer;
 import GPS.GpsData;
 import PamUtils.PamUtils;
+import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import contactcollator.io.CollatorLogging;
 import generalDatabase.PamTableDefinition;
@@ -23,24 +24,28 @@ public class CollatorExtendedLogging extends CollatorLogging{
 	 detectionUID,
 	 hasBearing,
 	 bearing0,
-	 bearingError;
+	 bearingError,
+	 speciesId;
 
-	protected CollatorExtendedLogging(CollatorControl moduleControl, CollatorDataBlock pamDataBlock) {
+	protected CollatorExtendedLogging(CollatorControl moduleControl, PamDataBlock pamDataBlock) {
 		
 		super(moduleControl,pamDataBlock);
 		
 		
-		PamTableDefinition tableDef = getTableDefinition();
 		
-		tableDef.addTableItem(buoyLatitude = new PamTableItem("buoyLatitude", Types.DOUBLE)); 
-		tableDef.addTableItem(buoyLongitude = new PamTableItem("buoyLongitude", Types.DOUBLE)); 
-		tableDef.addTableItem(buoyId = new PamTableItem("buoyId", Types.CHAR,10)); 
-		tableDef.addTableItem(clipBinaryFileName = new PamTableItem("clipBinaryFileName", Types.CHAR,100)); 
+		table.addTableItem(buoyLatitude = new PamTableItem("buoyLatitude", Types.DOUBLE)); 
+		table.addTableItem(buoyLongitude = new PamTableItem("buoyLongitude", Types.DOUBLE)); 
+		table.addTableItem(buoyId = new PamTableItem("buoyId", Types.CHAR,10)); 
+		table.addTableItem(clipBinaryFileName = new PamTableItem("clipBinaryFileName", Types.CHAR,100));
+		table.addTableItem(detectionUID = new PamTableItem("detectionUID", Types.BIGINT)); 
+		table.addTableItem(hasBearing = new PamTableItem("hasBearing", Types.BOOLEAN)); 
+		table.addTableItem(bearing0 = new PamTableItem("bearing0", Types.DOUBLE)); 
+		table.addTableItem(bearingError = new PamTableItem("bearingError", Types.DOUBLE)); 
+		table.addTableItem(speciesId = new PamTableItem("speciesId", Types.CHAR,10)); 
+		
+		setTableDefinition(table);
 
-		tableDef.addTableItem(detectionUID = new PamTableItem("detectionUID", Types.BIGINT)); 
-		tableDef.addTableItem(hasBearing = new PamTableItem("hasBearing", Types.BOOLEAN)); 
-		tableDef.addTableItem(bearing0 = new PamTableItem("bearing0", Types.DOUBLE)); 
-		tableDef.addTableItem(bearingError = new PamTableItem("bearingError", Types.DOUBLE)); 
+
 	}
 
 	@Override
@@ -59,6 +64,8 @@ public class CollatorExtendedLogging extends CollatorLogging{
 		buoyId.setValue(id);
 		 if(newUnit.getParentDataBlock().getBinaryDataSource()!=null && newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream()!=null) {
 			 clipBinaryFileName.setValue(newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream().getMainFileName());
+		 }else if(newUnit.getBinaryFileName()!=null){
+			 clipBinaryFileName.setValue(newUnit.getBinaryFileName());
 		 }
 		 if(newUnit.findTriggerData().getDataList().size()>0) {
 			 detectionUID.setValue(newUnit.findTriggerData().getDataList().get(0).getUID());
@@ -74,7 +81,7 @@ public class CollatorExtendedLogging extends CollatorLogging{
 				 bearingError.setValue(newUnit.getLocalisation().getAngleErrors()[0]);
 			 }
 		 }
-		
+		speciesId.setValue(newUnit.getSpeciesID());
 	}
 
 

@@ -11,8 +11,9 @@ import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -20,20 +21,29 @@ import javax.swing.border.TitledBorder;
 import PamView.dialog.GenericSwingDialog;
 import PamView.dialog.PamDialogPanel;
 import PamView.dialog.PamGridBagContraints;
+import PamView.dialog.SourcePanel;
 import PamView.dialog.warn.WarnOnce;
 import PamView.panel.PamNorthPanel;
-import PamView.panel.PamPanel;
 import contactcollator.CollatorControl;
 import contactcollator.CollatorParamSet;
 import contactcollator.CollatorParams;
+import detectiongrouplocaliser.DetectionGroupDataUnit;
 
 public class CollatorDialogPanel implements PamDialogPanel {
+	
+	private JPanel masterPanel;
 
 	private JPanel outerPanel; // may later want a scroll pane between outer and main. Not yet though. 
 
 	private JPanel mainPanel;
 
 	private JPanel buttonPanel;
+	
+	private JPanel annotationBorderPanel;
+	
+	private JCheckBox collateAnnotationsCheck;
+	
+	private SourcePanel annotationSourcePanel;
 
 	private CollatorControl collatorControl;
 
@@ -43,6 +53,7 @@ public class CollatorDialogPanel implements PamDialogPanel {
 		super();
 		this.collatorControl = collatorControl;
 		this.collatorDialog = collatorDialog;
+		this.masterPanel = new JPanel(new BorderLayout());
 		this.outerPanel = new JPanel(new BorderLayout());
 		this.mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -58,12 +69,31 @@ public class CollatorDialogPanel implements PamDialogPanel {
 				addStreamSet(null, true);
 			}
 		});
+		
+		masterPanel.add(BorderLayout.NORTH,outerPanel);
+		
+		this.annotationBorderPanel = new JPanel();
+		annotationBorderPanel.setBorder(new TitledBorder("Annotation stream"));
+		annotationSourcePanel = new SourcePanel(collatorDialog, DetectionGroupDataUnit.class, false, true);
+		GridBagConstraints c = new PamGridBagContraints();
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.gridy++;
+		annotationBorderPanel.add( new JLabel("Listen for Annoations",JLabel.LEFT), c);
+		c.gridx++;
+		annotationBorderPanel.add(collateAnnotationsCheck = new JCheckBox(), c);
+		annotationBorderPanel.add(BorderLayout.SOUTH, annotationSourcePanel.getPanel());
+		
+		masterPanel.add(BorderLayout.SOUTH,annotationBorderPanel);
+
 
 	}
+	
+
 
 	@Override
 	public JComponent getDialogComponent() {
-		return outerPanel;
+		return masterPanel;
 	}
 
 	@Override
@@ -73,6 +103,8 @@ public class CollatorDialogPanel implements PamDialogPanel {
 		//			((JDialog) rp).pack();
 		//		}
 		CollatorParams collatorParams = collatorControl.getCollatorParams();
+		collateAnnotationsCheck.setSelected(collatorControl.getCollatorParams().listenForAnnotations);
+		annotationSourcePanel.setSource(collatorControl.getCollatorParams().detectionGroupSource);
 		ArrayList<CollatorParamSet> paramSets = collatorParams.parameterSets;
 		if (paramSets == null) {
 			return;
@@ -110,8 +142,16 @@ public class CollatorDialogPanel implements PamDialogPanel {
 			}
 			newParams.parameterSets.add(aSet.paramSet);
 		}
+		
+		newParams.listenForAnnotations=collateAnnotationsCheck.isSelected();
+		
+		if(collateAnnotationsCheck.isSelected()) {
+			newParams.detectionGroupSource=annotationSourcePanel.getSourceName();
+		}
+
 		collatorControl.setCollatorParams(newParams);
 		
+	
 		return true;
 	}
 	
