@@ -32,7 +32,7 @@ import decimator.DecimatorParams;
 import decimator.DecimatorProcessW;
 import decimator.DecimatorWorker;
 
-public class CollatorStreamProcess extends PamProcess {
+public class CollatorStreamProcess extends PamProcess implements ClipDisplayParent{
 
 	private CollatorControl collatorControl;
 	private CollatorDataBlock collatorBlock;
@@ -423,6 +423,30 @@ public class CollatorStreamProcess extends PamProcess {
 	 */
 	public CollatorParamSet getParameterSet() {
 		return parameterSet;
+	}
+
+	@Override
+	public ClipDisplayDataBlock getClipDataBlock() {
+		// TODO Auto-generated method stub
+		return collatorBlock;
+	}
+
+	@Override
+	public String getDisplayName() {
+		// TODO Auto-generated method stub
+		return this.getSetName()+" Clips";
+	}
+
+	@Override
+	public ClipDisplayDecorations getClipDecorations(ClipDisplayUnit clipDisplayUnit) {
+		// TODO Auto-generated method stub
+		return new ClipDisplayDecorations(clipDisplayUnit);
+	}
+
+	@Override
+	public void displaySettingChange() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

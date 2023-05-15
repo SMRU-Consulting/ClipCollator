@@ -7,12 +7,15 @@ import Array.ArrayManager;
 import PamController.PamControlledUnit;
 import PamController.PamController;
 import PamUtils.PamUtils;
+import PamView.symbol.StandardSymbolManager;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.PamObservable;
 import PamguardMVC.PamProcess;
 import PamguardMVC.superdet.SubdetectionInfo;
 import annotation.DataAnnotation;
+import clipgenerator.ClipOverlayGraphics;
+import clipgenerator.clipDisplay.ClipSymbolManager;
 import contactcollator.io.CollatorBinaryStorage;
 import contactcollator.swing.CollatorOverlayGraphics;
 import detectiongrouplocaliser.DetectionGroupControl;
@@ -41,12 +44,20 @@ public class CollatorProcess extends PamProcess {
 		collatorDataBlock.setOverlayDraw(new CollatorOverlayGraphics(collatorDataBlock));
 		collatorDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, collatorDataBlock));
 		collatorDataBlock.setBinaryDataSource(new CollatorBinaryStorage(collatorControl,collatorDataBlock));
+		StandardSymbolManager symbolManager = new ClipSymbolManager(collatorDataBlock, ClipOverlayGraphics.defSymbol, true);
+		symbolManager.addSymbolOption(StandardSymbolManager.HAS_LINE_AND_LENGTH);
+		collatorDataBlock.setPamSymbolManager(symbolManager);
 		addOutputDataBlock(collatorDataBlock);
 		
 	}
 	
 	public void addAnnotation(PamDataUnit newUnit,DetectionGroupDataUnit detGroupDu) {
-		CollatorDataUnit annotatedCollatorUnit;
+		
+ 		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
+ 		if(ann.toString().equals("FALSE")) {
+ 			return;
+ 		}
+ 		CollatorDataUnit annotatedCollatorUnit;
  		if(!(newUnit instanceof CollatorDataUnit)) {
  			return;
  		}else {
@@ -55,11 +66,8 @@ public class CollatorProcess extends PamProcess {
 		 if(newUnit.getParentDataBlock().getBinaryDataSource()!=null && newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream()!=null) {
 			 annotatedCollatorUnit.setBinaryFileName(newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream().getMainFileName());
 		 }
- 		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
- 		if(!ann.toString().equals("FALSE")) {
- 			annotatedCollatorUnit.setSpeciesID(ann.toString());
- 	 		annotatedDataBlock.addPamData(annotatedCollatorUnit);
- 		}
+		 annotatedCollatorUnit.setSpeciesID(ann.toString());
+ 		annotatedDataBlock.addPamData(annotatedCollatorUnit);
 	}
 
 	
@@ -70,8 +78,11 @@ public class CollatorProcess extends PamProcess {
 		}
 		DetectionGroupDataUnit du = (DetectionGroupDataUnit) pamDataUnit;
 		PamDataUnit u;
-		ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections = du.getLastAddedSubDetections();
+		ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections = du.getAndResetLastAddedSubDetections();
 		for(SubdetectionInfo<PamDataUnit> nextInfo : lastAddedSubDetections) {
+			if(annotatedDataBlock.findUnitByUIDandUTC(nextInfo.getSubDetection().getUID(), nextInfo.getSubDetection().getTimeMilliseconds())!=null) {
+				continue;
+			}
 			addAnnotation(nextInfo.getSubDetection(),du);
 		}
 		
@@ -127,6 +138,8 @@ public class CollatorProcess extends PamProcess {
 		}
 		
 		organiseStreamProcesses();
+		
+		collatorControl.addStreamProviders();
 		
 		// set the parent process of the main output datablock (i.e. the parent of this) to be the first 
 		// acquisition or a few things don't work properly. 

@@ -34,7 +34,7 @@ public class CollatorRateFilter {
 			}
 		}
 		if (lastUpdate != null) {
-			if (triggerData.getStartTime() <= lastUpdate.getEndTime()) {
+			if (triggerData.getStartTime() >= lastUpdate.getEndTime()) {
 				lastUpdate = triggerData;
 				return TRIGGER_SENDUPDATE;
 			}

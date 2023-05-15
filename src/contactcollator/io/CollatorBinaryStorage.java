@@ -207,7 +207,9 @@ public class CollatorBinaryStorage extends BinaryDataSource {
 			//cdu.findTriggerDataUnit();
 			cdu.setTriggerUTCs(triggerUTCs);
 			
-			cdu.setBearingSummary(new BearingSummaryLocalisation(cdu, bearingSummary));
+			if(bearingSummary!=null) {
+				cdu.setBearingSummary(new BearingSummaryLocalisation(cdu, bearingSummary));
+			}
 			cdu.setHeadingHistogram(headingHist);
 			
 		} catch (IOException e) {

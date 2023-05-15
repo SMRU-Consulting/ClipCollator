@@ -195,19 +195,21 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 		}
 		
 		synchronized (dataBlock.getSynchLock()) {
-			ListIterator<PamDataUnit> iter = dataBlock.getListIterator(PamDataBlock.ITERATOR_END);
-			while (iter.hasPrevious()) {
-				
-				for(long nextTrigTime:trigTimes) {
+			
+			for(long nextTrigTime:trigTimes) {
+				ListIterator<PamDataUnit> iter = dataBlock.getListIterator(PamDataBlock.ITERATOR_END);
+				while (iter.hasPrevious()) {
 					t1 = nextTrigTime - timeJitter;
 					t2 = nextTrigTime + timeJitter;
 					PamDataUnit trigUnit = iter.previous();
 					long trigTime = trigUnit.getTimeMilliseconds();
 					if (trigTime >= t1 && trigTime <= t2 && (trigUnit.getChannelBitmap() & this.getChannelBitmap()) != 0) {
 						detectorData.add(trigUnit);
+						break;
 					}
 				}
 			}
+			
 		}
 		return new CollatorTriggerData(min(trigTimes),max(trigTimes),dataBlock.getLongDataName(),detectorData);
 

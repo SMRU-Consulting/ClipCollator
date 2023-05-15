@@ -76,7 +76,10 @@ public class CollatorExtendedLogging extends CollatorLogging{
 			 hasBearing.setValue(false);
 		 }else {
 			 hasBearing.setValue(true);
-			 bearing0.setValue(newUnit.getLocalisation().getAngles()[0]);
+			 double bearingReArray = newUnit.getLocalisation().getAngles()[0];
+			 double headingRadians = streamer.getHeading()*Math.PI/180;
+			 double bearingReN = bearingReArray+headingRadians;
+			 bearing0.setValue(bearingReN);
 			 if(newUnit.getLocalisation().getAngleErrors()!=null) {
 				 bearingError.setValue(newUnit.getLocalisation().getAngleErrors()[0]);
 			 }
