@@ -13,7 +13,10 @@ import PamguardMVC.PamDataUnit;
 import PamguardMVC.PamObservable;
 import PamguardMVC.PamProcess;
 import PamguardMVC.superdet.SubdetectionInfo;
+import PamguardMVC.superdet.SuperDetDataBlock;
+import PamguardMVC.superdet.SuperDetection;
 import annotation.DataAnnotation;
+import annotation.localise.targetmotion.TMAnnotation;
 import clipgenerator.ClipOverlayGraphics;
 import clipgenerator.clipDisplay.ClipSymbolManager;
 import contactcollator.io.CollatorBinaryStorage;
@@ -22,6 +25,9 @@ import detectiongrouplocaliser.DetectionGroupControl;
 import detectiongrouplocaliser.DetectionGroupDataBlock;
 import detectiongrouplocaliser.DetectionGroupDataUnit;
 import detectiongrouplocaliser.EventBuilderFunctions;
+import group3dlocaliser.Group3DDataBlock;
+import group3dlocaliser.Group3DDataUnit;
+import whistlesAndMoans.ConnectedRegionDataUnit;
 
 
 public class CollatorProcess extends PamProcess {
@@ -34,7 +40,7 @@ public class CollatorProcess extends PamProcess {
 	
 	private ArrayList<CollatorStreamProcess> streamProcesses = new ArrayList<>();
 	
-	DetectionGroupDataBlock detGroupDataBlock;
+	SuperDetDataBlock detGroupDataBlock;
 		
 
 	public CollatorProcess(CollatorControl collatorControl) {
@@ -48,12 +54,23 @@ public class CollatorProcess extends PamProcess {
 		symbolManager.addSymbolOption(StandardSymbolManager.HAS_LINE_AND_LENGTH);
 		collatorDataBlock.setPamSymbolManager(symbolManager);
 		addOutputDataBlock(collatorDataBlock);
+		annotatedDataBlock = new AnnotatedCollationDataBlock("Annotated_Detections",this,0);
+		annotatedDataBlock.setOverlayDraw(new CollatorOverlayGraphics(annotatedDataBlock));
+		annotatedDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, annotatedDataBlock));
+		addOutputDataBlock(annotatedDataBlock);
 		
 	}
 	
-	public void addAnnotation(PamDataUnit newUnit,DetectionGroupDataUnit detGroupDu) {
-		
+	public void addSubDetection(PamDataUnit newUnit,SuperDetection detGroupDu) {
  		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
+ 		if(detGroupDu instanceof DetectionGroupDataUnit) {
+ 			addAnnotation(newUnit,ann);
+ 		}
+
+	}
+	
+	public void addAnnotation(PamDataUnit newUnit,DataAnnotation ann) {
+		
  		if(ann.toString().equals("FALSE")) {
  			return;
  		}
@@ -62,35 +79,59 @@ public class CollatorProcess extends PamProcess {
  			return;
  		}else {
  			annotatedCollatorUnit = ((CollatorDataUnit) newUnit).clone();
+ 			//annotatedCollatorUnit = collatorDataBlock.findUnitByUIDandUTC(newUnit.getUID(), newUnit.getTimeMilliseconds());
  		}
 		 if(newUnit.getParentDataBlock().getBinaryDataSource()!=null && newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream()!=null) {
 			 annotatedCollatorUnit.setBinaryFileName(newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream().getMainFileName());
 		 }
+		 
+		 
+		 if(annotatedCollatorUnit.getTriggerData().getDataList()!=null
+				 &&annotatedCollatorUnit.getTriggerData().getDataList().size()>0
+				 &&annotatedCollatorUnit.getTriggerData().getDataList().get(0)!=null) {
+			 			 
+			 int n =  annotatedCollatorUnit.getTriggerData().getDataList().get(0).getSuperDetectionsCount();
+			 
+			 for(int i=0;i<n;i++) {
+				SuperDetection sup = annotatedCollatorUnit.getTriggerData().getDataList().get(0).getSuperDetection(i);
+				if(sup instanceof Group3DDataUnit){
+					
+					Group3DDataUnit loc3d = (Group3DDataUnit) sup;
+					annotatedCollatorUnit.setLocalization3D(loc3d);
+				}
+				int x=0;
+				 
+			 }
+		 }
+		 
+		 
 		 annotatedCollatorUnit.setSpeciesID(ann.toString());
  		annotatedDataBlock.addPamData(annotatedCollatorUnit);
+ 		
+ 		System.out.println("Adding annotation for "+newUnit.toString());
 	}
 
 	
 	@Override
 	public void updateData(PamObservable observable, PamDataUnit pamDataUnit) {
-		if(!(pamDataUnit instanceof DetectionGroupDataUnit)) {
+		if(!(pamDataUnit instanceof SuperDetection)) {
 			return;
 		}
-		DetectionGroupDataUnit du = (DetectionGroupDataUnit) pamDataUnit;
+		SuperDetection du = (SuperDetection) pamDataUnit;
 		PamDataUnit u;
 		ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections = du.getAndResetLastAddedSubDetections();
 		for(SubdetectionInfo<PamDataUnit> nextInfo : lastAddedSubDetections) {
 			if(annotatedDataBlock.findUnitByUIDandUTC(nextInfo.getSubDetection().getUID(), nextInfo.getSubDetection().getTimeMilliseconds())!=null) {
 				continue;
 			}
-			addAnnotation(nextInfo.getSubDetection(),du);
+			addSubDetection(nextInfo.getSubDetection(),du);
 		}
 		
 	}
 	
 	@Override
 	public void newData(PamObservable observable, PamDataUnit pamDataUnit) {
-		if(!(pamDataUnit instanceof DetectionGroupDataUnit)) {
+		if(!(pamDataUnit instanceof SuperDetection)) {
 			return;
 		}
 		updateData(observable,pamDataUnit);
@@ -122,19 +163,17 @@ public class CollatorProcess extends PamProcess {
 		
 		if(collatorControl.getCollatorParams().listenForAnnotations) {
 			
-			annotatedDataBlock = new AnnotatedCollationDataBlock("Annotated_Detections",this,0);
-			annotatedDataBlock.setOverlayDraw(new CollatorOverlayGraphics(annotatedDataBlock));
-			annotatedDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, annotatedDataBlock));
 			annotatedDataBlock.setChannelMap(hydrophoneMap);
 
-			addOutputDataBlock(annotatedDataBlock);
 			
-			PamDataBlock block = PamController.getInstance().getDataBlockByLongName(collatorControl.getCollatorParams().detectionGroupSource);
-			
-			if(block!=null && block instanceof DetectionGroupDataBlock) {
-				detGroupDataBlock =  (DetectionGroupDataBlock) block;
-				detGroupDataBlock.addObserver(this);
+			for(String nextBlockName:collatorControl.getCollatorParams().superDetectionSourceList) {
+				PamDataBlock block = PamController.getInstance().getDataBlockByLongName(nextBlockName);
+				if(block!=null && block instanceof SuperDetDataBlock) {
+					detGroupDataBlock =  (SuperDetDataBlock) block;
+					detGroupDataBlock.addObserver(this);
+				}
 			}
+			
 		}
 		
 		organiseStreamProcesses();

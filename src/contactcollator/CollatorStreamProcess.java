@@ -88,6 +88,8 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		}
 	}
 	
+	
+
 	/**
 	 * Use the data selector built into the detection datablock to see if we want the incoming data. 
 	 * @param dataUnit
@@ -205,12 +207,23 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		long selectStart = trigger.getStartTime();
 		long wavEnd = cloneCopy.get(cloneCopy.size()-1).getEndTimeInMilliseconds();
 		long wavStart = cloneCopy.get(0).getTimeMilliseconds();
+		long wavLength = wavEnd-wavStart;
+		long addTimeForMin = (long) (parameterSet.minClipLengthS*1000)-(selectEnd-selectStart);
+		long detectionLength = selectEnd-selectStart;
 		if (wavEnd > selectEnd) {
-			selectEnd += (selectEnd-selectStart)/5;
+			if(addTimeForMin<=0) {
+				selectEnd += (selectEnd-selectStart)/5;
+			}else {
+				selectEnd = selectEnd + (long) (addTimeForMin/2);
+			}
 			selectEnd = Math.min(selectEnd, wavEnd);
 		}
 		if (wavStart < selectStart) {
-			selectStart = selectStart - (long) (selectEnd-selectStart)/5;
+			if(addTimeForMin<=0) {
+				selectStart = selectStart - (long) (selectEnd-selectStart)/5;
+			}else {
+				selectStart = selectStart - (long) (addTimeForMin/2);
+			}
 		}
 		selectStart = Math.max(selectStart, selectEnd-(long)(parameterSet.outputClipLengthS*1000));
 //		selectStart = wavStart;
@@ -310,7 +323,9 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 			RawDataUnit in = (RawDataUnit) pamDataUnit;
 			RawDataUnit copy = new RawDataUnit(in.getTimeMilliseconds(), in.getChannelBitmap(), in.getStartSample(), in.getSampleDuration());
 			copy.setRawData(in.getRawData());
-			rawDataCopy.addPamData(copy);			
+			synchronized (rawDataCopy.getSynchLock()) {
+				rawDataCopy.addPamData(copy);	
+			}
 		}
 
 		@Override
@@ -409,6 +424,10 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		if (rawDataBlock != null) {
 			rawDataBlock.deleteObserver(rawDataObserver);
 			rawDataBlock = null;
+		}
+		if (rawDataCopy != null) {
+			rawDataCopy.deleteObserver(rawDataObserver);
+			rawDataCopy = null;
 		}
 		
 	}

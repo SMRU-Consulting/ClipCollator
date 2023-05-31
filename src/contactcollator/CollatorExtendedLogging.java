@@ -5,6 +5,7 @@ import java.sql.Types;
 import Array.ArrayManager;
 import Array.Streamer;
 import GPS.GpsData;
+import Localiser.algorithms.locErrors.LocaliserError;
 import PamUtils.PamUtils;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
@@ -25,13 +26,17 @@ public class CollatorExtendedLogging extends CollatorLogging{
 	 hasBearing,
 	 bearing0,
 	 bearingError,
-	 speciesId;
+	 speciesId,
+	 sourceLatitude,
+	 sourceLongitude,
+	 sourceLocalizationError0,
+	 sourceLocalizationError1,
+	 groupd3DLocalizationStreamName,
+	 group3DLocalizationUID;
 
 	protected CollatorExtendedLogging(CollatorControl moduleControl, PamDataBlock pamDataBlock) {
 		
 		super(moduleControl,pamDataBlock);
-		
-		
 		
 		table.addTableItem(buoyLatitude = new PamTableItem("buoyLatitude", Types.DOUBLE)); 
 		table.addTableItem(buoyLongitude = new PamTableItem("buoyLongitude", Types.DOUBLE)); 
@@ -42,7 +47,13 @@ public class CollatorExtendedLogging extends CollatorLogging{
 		table.addTableItem(bearing0 = new PamTableItem("bearing0", Types.DOUBLE)); 
 		table.addTableItem(bearingError = new PamTableItem("bearingError", Types.DOUBLE)); 
 		table.addTableItem(speciesId = new PamTableItem("speciesId", Types.CHAR,10)); 
-		
+		table.addTableItem(sourceLatitude = new PamTableItem("sourceLatitude", Types.DOUBLE)); 
+		table.addTableItem(sourceLongitude = new PamTableItem("sourceLongitude", Types.DOUBLE)); 
+		table.addTableItem(sourceLocalizationError0 = new PamTableItem("sourceLocalizationError0", Types.DOUBLE)); 
+		table.addTableItem(sourceLocalizationError1 = new PamTableItem("sourceLocalizationError1", Types.DOUBLE));
+		table.addTableItem(group3DLocalizationUID = new PamTableItem("group3DLocalizationUID", Types.BIGINT));
+		table.addTableItem(groupd3DLocalizationStreamName = new PamTableItem("groupd3DLocalizationStreamName", Types.CHAR,30)); 
+
 		setTableDefinition(table);
 
 
@@ -52,6 +63,17 @@ public class CollatorExtendedLogging extends CollatorLogging{
 	public void setTableData(SQLTypes sqlTypes, PamDataUnit pamDataUnit) {
 		super.setTableData(sqlTypes, pamDataUnit);
 		CollatorDataUnit newUnit = (CollatorDataUnit) pamDataUnit;
+		
+		
+		sourceLatitude.setValue(newUnit.getSourceLat());
+		sourceLongitude.setValue(newUnit.getSourceLon());
+			
+		sourceLocalizationError0.setValue(newUnit.getSourceErrorMagnitude0());
+		sourceLocalizationError1.setValue(newUnit.getSourceErrorMagnitude1());
+				 
+		group3DLocalizationUID.setValue(newUnit.getGroupd3DLocalizationUID());
+		groupd3DLocalizationStreamName.setValue(newUnit.getGroupd3DLocalizationStreamName());
+		
 		int chIdx = PamUtils.getLowestChannel(newUnit.getChannelBitmap());
 		int streamerId = ArrayManager.getArrayManager().getCurrentArray().getStreamerForPhone(chIdx);
 		Streamer streamer = ArrayManager.getArrayManager().getCurrentArray().getStreamer(streamerId);

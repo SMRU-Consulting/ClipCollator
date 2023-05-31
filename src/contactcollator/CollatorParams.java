@@ -17,6 +17,8 @@ public class CollatorParams implements ManagedParameters, Cloneable, Serializabl
 	
 	public String detectionGroupSource = null;
 	
+	public ArrayList<String> superDetectionSourceList = new ArrayList<String>();
+	
 	public int getNParameterSets() {
 		return parameterSets.size();
 	}

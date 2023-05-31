@@ -30,6 +30,11 @@ public class CollatorParamSet  implements ManagedParameters, Cloneable, Serializ
 	public String rawDataSource;
 	
 	/**
+	 * value of min clip length
+	 */
+	public float minClipLengthS = 0;
+	
+	/**
 	 * Length of output clips in seconds. 
 	 */
 	public float outputClipLengthS = 2;

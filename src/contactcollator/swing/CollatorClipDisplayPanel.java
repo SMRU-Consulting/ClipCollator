@@ -1,8 +1,10 @@
 package contactcollator.swing;
 
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 
 import PamguardMVC.PamDataBlock;
+import PamguardMVC.PamDataUnit;
 import PamguardMVC.PamProcess;
 import clipgenerator.ClipDataUnit;
 import clipgenerator.ClipProcess;
@@ -26,10 +28,11 @@ public class CollatorClipDisplayPanel extends ClipDisplayPanel{
 	
 	@Override
 	protected boolean shouldShowClip(ClipDisplayUnit dataUnit) {
-		
+				
 		if(dataUnit.getClipDataUnit() instanceof CollatorDataUnit) {
 			CollatorDataUnit du = (CollatorDataUnit) dataUnit.getClipDataUnit();
 			if(du.getStreamName().equals(collatorStreamProcess.getSetName())) {
+				du.findTriggerData();
 				return true;
 			}
 		}

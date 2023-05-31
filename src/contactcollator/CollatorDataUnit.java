@@ -3,16 +3,19 @@ package contactcollator;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+import Localiser.algorithms.locErrors.LocaliserError;
 import PamController.PamController;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.RawDataHolder;
 import PamguardMVC.RawDataTransforms;
+import annotation.localise.targetmotion.TMAnnotation;
 import clipgenerator.ClipDataUnit;
 import contactcollator.bearings.BearingSummary;
 import contactcollator.bearings.BearingSummaryLocalisation;
 import contactcollator.bearings.HeadingHistogram;
 import contactcollator.trigger.CollatorTriggerData;
+import group3dlocaliser.Group3DDataUnit;
 
 /**
  * Data output from Contact Collator. The datablock may contain these data units from multiple
@@ -39,6 +42,23 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	private String speciesID;
 	
 	private String binaryFileName;
+	
+	//private TMAnnotation localization3D= null;
+	
+	private double sourceLat;
+	
+	private double sourceLon;
+	
+	private double sourceErrorMagnitude0;
+	
+	private double sourceErrorMagnitude1;
+	
+	private long groupd3DLocalizationUID;
+
+	private String groupd3DLocalizationStreamName;
+	
+	private Group3DDataUnit group3DDataUnit;
+	
 
 	/**
 	 * Real time constructor
@@ -150,12 +170,78 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 		return binaryFileName;
 	}
 
+	public double getSourceLat() {
+		return sourceLat;
+	}
+
+	public void setSourceLat(double sourceLat) {
+		this.sourceLat = sourceLat;
+	}
+
+	public double getSourceLon() {
+		return sourceLon;
+	}
+
+	public void setSourceLon(double sourceLon) {
+		this.sourceLon = sourceLon;
+	}
+
+	public double getSourceErrorMagnitude0() {
+		return sourceErrorMagnitude0;
+	}
+
+	public void setSourceErrorMagnitude0(double sourceErrorMagnitude0) {
+		this.sourceErrorMagnitude0 = sourceErrorMagnitude0;
+	}
+
+	public double getSourceErrorMagnitude1() {
+		return sourceErrorMagnitude1;
+	}
+
+	public void setSourceErrorMagnitude1(double sourceErrorMagnitude1) {
+		this.sourceErrorMagnitude1 = sourceErrorMagnitude1;
+	}
+
 	public void setBinaryFileName(String binaryFileName) {
 		this.binaryFileName = binaryFileName;
 	}
 
 	public void setSpeciesID(String speciesID) {
 		this.speciesID = speciesID;
+	}
+	
+	public long getGroupd3DLocalizationUID() {
+		return groupd3DLocalizationUID;
+	}
+
+	public void setGroupd3DLocalizationUID(long groupd3dLocalizationUID) {
+		groupd3DLocalizationUID = groupd3dLocalizationUID;
+	}
+
+	public String getGroupd3DLocalizationStreamName() {
+		return groupd3DLocalizationStreamName;
+	}
+
+	public void setGroupd3DLocalizationStreamName(String groupd3dLocalizationStreamName) {
+		groupd3DLocalizationStreamName = groupd3dLocalizationStreamName;
+	}
+
+	public void setLocalization3D(Group3DDataUnit localization3D) {
+		int nAmbiguity = localization3D.getLocalisation().getAmbiguityCount();
+		this.group3DDataUnit = localization3D;
+		sourceLat =   localization3D.getLocalisation().getOriginLatLong().getLatitude();
+		sourceLon =   localization3D.getLocalisation().getOriginLatLong().getLongitude();
+		for(int i=0;i<nAmbiguity;i++) {
+			 LocaliserError locError =  localization3D.getLocalisation().getLocError(i);
+			 if(i==0) {
+				 sourceErrorMagnitude0 = locError.getErrorMagnitude();
+			 }else {
+				 sourceErrorMagnitude1 = locError.getErrorMagnitude();
+			 }
+		}
+		groupd3DLocalizationStreamName = localization3D.getParentDataBlock().getLongDataName();
+		groupd3DLocalizationUID = localization3D.getUID();
+	
 	}
 
 	/**
@@ -181,10 +267,10 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 		if (dataBlock == null) {
 			return null;
 		}
-		return triggerData = findTriggerData2(triggerUTCs,dataBlock, 20);
+		return triggerData = findTriggerData2(triggerUTCs,dataBlock, 20,0);
 	}
 	
-	private CollatorTriggerData findTriggerData2(ArrayList<Long> trigTimes, PamDataBlock<PamDataUnit> dataBlock, int timeJitter) {
+	private CollatorTriggerData findTriggerData2(ArrayList<Long> trigTimes, PamDataBlock<PamDataUnit> dataBlock, int timeJitter,int attempt) {
 		long t1;
 		long t2;
 		
@@ -211,6 +297,11 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 			}
 			
 		}
+		
+		if(detectorData.size()==0) {
+			int x=1;
+		}
+
 		return new CollatorTriggerData(min(trigTimes),max(trigTimes),dataBlock.getLongDataName(),detectorData);
 
 	}
@@ -270,6 +361,14 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 		newUnit.setTriggerUTCs(this.triggerUTCs);
 		return newUnit;
 		
+	}
+
+	public Group3DDataUnit getGroup3DDataUnit() {
+		return group3DDataUnit;
+	}
+
+	public void setGroup3DDataUnit(Group3DDataUnit group3dDataUnit) {
+		group3DDataUnit = group3dDataUnit;
 	}
 
 }
