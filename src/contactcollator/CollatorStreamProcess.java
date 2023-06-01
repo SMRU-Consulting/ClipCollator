@@ -70,13 +70,13 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 
 	@Override
 	public void pamStart() {
-		// TODO Auto-generated method stub
+		rawDataObserver.pause=false;
 
 	}
 
 	@Override
 	public void pamStop() {
-		// TODO Auto-generated method stub
+		rawDataObserver.pause=true;
 
 	}
 	
@@ -312,6 +312,8 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 	}
 	
 	private class RawDataObserver implements PamObserver {
+		
+		boolean pause = false;
 
 		@Override
 		public long getRequiredDataHistory(PamObservable observable, Object arg) {
@@ -323,6 +325,9 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 			/**
 			 * Make a copy of the data (not the raw data) into a local array. won't need much memory, so OK. 
 			 */
+			if(pause) {
+				return;
+			}
 			RawDataUnit in = (RawDataUnit) pamDataUnit;
 			RawDataUnit copy = new RawDataUnit(in.getTimeMilliseconds(), in.getChannelBitmap(), in.getStartSample(), in.getSampleDuration());
 			copy.setRawData(in.getRawData());
