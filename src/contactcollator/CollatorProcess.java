@@ -97,10 +97,11 @@ public class CollatorProcess extends PamProcess {
 				if(sup instanceof Group3DDataUnit){
 					
 					Group3DDataUnit loc3d = (Group3DDataUnit) sup;
+					
+					//loc3d.get
+					
 					annotatedCollatorUnit.setLocalization3D(loc3d);
-				}
-				int x=0;
-				 
+				}		 
 			 }
 		 }
 		 

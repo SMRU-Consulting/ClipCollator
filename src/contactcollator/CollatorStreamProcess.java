@@ -140,7 +140,10 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 			 * still block the trigger data thread if the next stage takes more than a second or two, to may need 
 			 * to make an entirely new thread to handle these final bits of the processing?? 
 			 */
-			CollatorDataUnit newDataUnit = createOutputData(trigger, cloneCopy, 0x1);
+			int firstChannel = PamUtils.getLowestChannel(trigger.getDataList().get(0).getChannelBitmap());
+			int[] channelList = new int[] {firstChannel};
+			int bitmap = PamUtils.makeChannelMap(channelList);
+			CollatorDataUnit newDataUnit = createOutputData(trigger, cloneCopy, bitmap);
 			if (newDataUnit == null) {
 				return;
 			}

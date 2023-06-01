@@ -59,6 +59,11 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	
 	private Group3DDataUnit group3DDataUnit;
 	
+	//Adding final strings for group3d loc name, because the dataunits are returning null for parentdatablock
+	private final String group3dLF = "Group 3D Localiser LF, Group";
+	private final String group3dMF = "Group 3D Localiser MF, Group";
+
+	
 
 	/**
 	 * Real time constructor
