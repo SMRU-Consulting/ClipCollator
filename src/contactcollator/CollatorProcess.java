@@ -2,11 +2,16 @@ package contactcollator;
 
 import java.util.ArrayList;
 
+import javax.sound.sampled.AudioFormat;
+
 import Acquisition.AcquisitionControl;
 import Array.ArrayManager;
+import Array.Streamer;
+import GPS.GpsData;
 import PamController.PamControlledUnit;
 import PamController.PamController;
 import PamUtils.PamUtils;
+import PamUtils.PamArrayUtils;
 import PamView.symbol.StandardSymbolManager;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
@@ -27,6 +32,8 @@ import detectiongrouplocaliser.DetectionGroupDataUnit;
 import detectiongrouplocaliser.EventBuilderFunctions;
 import group3dlocaliser.Group3DDataBlock;
 import group3dlocaliser.Group3DDataUnit;
+import wavFiles.Wav16AudioFormat;
+import wavFiles.WavFileWriter;
 import whistlesAndMoans.ConnectedRegionDataUnit;
 
 
@@ -59,6 +66,9 @@ public class CollatorProcess extends PamProcess {
 		annotatedDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, annotatedDataBlock));
 		addOutputDataBlock(annotatedDataBlock);
 		
+		
+		
+		
 	}
 	
 	public void addSubDetection(PamDataUnit newUnit,SuperDetection detGroupDu) {
@@ -71,16 +81,20 @@ public class CollatorProcess extends PamProcess {
 	
 	public void addAnnotation(PamDataUnit newUnit,DataAnnotation ann) {
 		
- 		if(ann.toString().equals("FALSE")) {
- 			return;
- 		}
- 		CollatorDataUnit annotatedCollatorUnit;
+		CollatorDataUnit annotatedCollatorUnit;
  		if(!(newUnit instanceof CollatorDataUnit)) {
  			return;
  		}else {
  			annotatedCollatorUnit = ((CollatorDataUnit) newUnit).clone();
  			//annotatedCollatorUnit = collatorDataBlock.findUnitByUIDandUTC(newUnit.getUID(), newUnit.getTimeMilliseconds());
  		}
+ 		
+ 		annotatedCollatorUnit.findTriggerData();
+		
+ 		if(ann.toString().equals("FALSE")) {
+ 			return;
+ 		}
+ 		
 		 if(newUnit.getParentDataBlock().getBinaryDataSource()!=null && newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream()!=null) {
 			 annotatedCollatorUnit.setBinaryFileName(newUnit.getParentDataBlock().getBinaryDataSource().getBinaryStorageStream().getMainFileName());
 		 }
@@ -97,9 +111,7 @@ public class CollatorProcess extends PamProcess {
 				if(sup instanceof Group3DDataUnit){
 					
 					Group3DDataUnit loc3d = (Group3DDataUnit) sup;
-					
-					//loc3d.get
-					
+										
 					annotatedCollatorUnit.setLocalization3D(loc3d);
 				}		 
 			 }
@@ -151,7 +163,8 @@ public class CollatorProcess extends PamProcess {
 	@Override
 	public void setupProcess() {
 		super.setupProcess();
-		
+		TestListener tt = new TestListener();
+
 		
 		/*
 		 *  could have anything in it, so set the channel map to the acquisition map.
@@ -258,6 +271,13 @@ public class CollatorProcess extends PamProcess {
 	 */
 	public CollatorDataBlock getCollatorDataBlock() {
 		return collatorDataBlock;
+	}
+	
+	public void saveWAV(long fs, double[][] wav, long UID) {
+		AudioFormat af = new Wav16AudioFormat(fs, wav.length);
+		WavFileWriter wavFile = new WavFileWriter("C:\\SystemTesting\\Nextimus\\WavtestFolder\\"+String.valueOf(UID)+".wav", af);
+		wavFile.write(wav);
+		wavFile.close();
 	}
 
 	

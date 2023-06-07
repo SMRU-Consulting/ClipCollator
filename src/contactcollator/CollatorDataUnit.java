@@ -244,7 +244,9 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 				 sourceErrorMagnitude1 = locError.getErrorMagnitude();
 			 }
 		}
-		groupd3DLocalizationStreamName = localization3D.getParentDataBlock().getLongDataName();
+		if(localization3D.getParentDataBlock()!=null) {
+			groupd3DLocalizationStreamName = localization3D.getParentDataBlock().getLongDataName();
+		}
 		groupd3DLocalizationUID = localization3D.getUID();
 	
 	}
@@ -261,7 +263,7 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	}
 	
 	public CollatorTriggerData findTriggerData() {
-		if (triggerData != null) {
+		if (triggerData != null && triggerData.getDataList().size()>0) {
 			return triggerData;
 		}
 		
@@ -331,6 +333,9 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	}
 	
 	private long min(ArrayList<Long> arr) {
+		if(arr==null||arr.size()==0) {
+			return 0;
+		}
 		long min=arr.get(0);
 		for(long el:arr) {
 			if(el<min) {
@@ -341,6 +346,9 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	}
 	
 	private long max(ArrayList<Long> arr) {
+		if(arr==null||arr.size()==0) {
+			return 0;
+		}
 		long max=arr.get(0);
 		for(long el:arr) {
 			if(el>max) {
