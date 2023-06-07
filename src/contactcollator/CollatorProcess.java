@@ -163,8 +163,7 @@ public class CollatorProcess extends PamProcess {
 	@Override
 	public void setupProcess() {
 		super.setupProcess();
-		TestListener tt = new TestListener();
-
+		
 		
 		/*
 		 *  could have anything in it, so set the channel map to the acquisition map.
