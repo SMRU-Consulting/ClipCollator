@@ -232,6 +232,9 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 	}
 
 	public void setLocalization3D(Group3DDataUnit localization3D) {
+		if(localization3D.getLocalisation()==null) {
+			return;
+		}
 		int nAmbiguity = localization3D.getLocalisation().getAmbiguityCount();
 		this.group3DDataUnit = localization3D;
 		sourceLat =   localization3D.getLocalisation().getOriginLatLong().getLatitude();
