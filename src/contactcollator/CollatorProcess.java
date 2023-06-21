@@ -121,7 +121,7 @@ public class CollatorProcess extends PamProcess {
 		 annotatedCollatorUnit.setSpeciesID(ann.toString());
  		annotatedDataBlock.addPamData(annotatedCollatorUnit);
  		
- 		System.out.println("Adding annotation for "+newUnit.toString());
+ 		//System.out.println("Adding annotation for "+newUnit.toString());
 	}
 
 	
@@ -178,12 +178,13 @@ public class CollatorProcess extends PamProcess {
 			
 			annotatedDataBlock.setChannelMap(hydrophoneMap);
 
-			
-			for(String nextBlockName:collatorControl.getCollatorParams().superDetectionSourceList) {
-				PamDataBlock block = PamController.getInstance().getDataBlockByLongName(nextBlockName);
-				if(block!=null && block instanceof SuperDetDataBlock) {
-					detGroupDataBlock =  (SuperDetDataBlock) block;
-					detGroupDataBlock.addObserver(this);
+			if(collatorControl.getCollatorParams().superDetectionSourceList!=null) {
+				for(String nextBlockName:collatorControl.getCollatorParams().superDetectionSourceList) {
+					PamDataBlock block = PamController.getInstance().getDataBlockByLongName(nextBlockName);
+					if(block!=null && block instanceof SuperDetDataBlock) {
+						detGroupDataBlock =  (SuperDetDataBlock) block;
+						detGroupDataBlock.addObserver(this);
+					}
 				}
 			}
 			
