@@ -15,6 +15,7 @@ import PamguardMVC.PamObserver;
 import PamguardMVC.PamProcess;
 import PamguardMVC.PamRawDataBlock;
 import PamguardMVC.dataSelector.DataSelector;
+import clickDetector.ClickDetection;
 import clipgenerator.ClipDataUnit;
 import clipgenerator.ClipDisplayDataBlock;
 import clipgenerator.clipDisplay.ClipDisplayDecorations;
@@ -83,7 +84,13 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 	@Override
 	public void newData(PamObservable o, PamDataUnit dataUnit) {
 		// see if we actually want it using the data selector
+		if(PamController.getInstance().getRunMode()==PamController.RUN_NETWORKRECEIVER) {
+			return;
+		}
 		if (wantDetectionData(dataUnit)) {
+			if(dataUnit instanceof ClickDetection) {
+				int x=0;
+			}
 			useDetectionData(dataUnit);
 		}
 	}
