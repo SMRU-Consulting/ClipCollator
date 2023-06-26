@@ -11,6 +11,7 @@ import GPS.GpsData;
 import PamController.PamControlledUnit;
 import PamController.PamController;
 import PamUtils.PamUtils;
+import PamUtils.SelectFolder;
 import PamUtils.PamArrayUtils;
 import PamView.symbol.StandardSymbolManager;
 import PamguardMVC.PamDataBlock;
@@ -22,10 +23,12 @@ import PamguardMVC.superdet.SuperDetDataBlock;
 import PamguardMVC.superdet.SuperDetection;
 import annotation.DataAnnotation;
 import annotation.localise.targetmotion.TMAnnotation;
+import clickDetector.ClickDetection;
 import clipgenerator.ClipOverlayGraphics;
 import clipgenerator.clipDisplay.ClipSymbolManager;
 import contactcollator.io.CollatorBinaryStorage;
 import contactcollator.swing.CollatorOverlayGraphics;
+import contactcollator.trigger.CollatorTriggerData;
 import detectiongrouplocaliser.DetectionGroupControl;
 import detectiongrouplocaliser.DetectionGroupDataBlock;
 import detectiongrouplocaliser.DetectionGroupDataUnit;
@@ -65,9 +68,6 @@ public class CollatorProcess extends PamProcess {
 		annotatedDataBlock.setOverlayDraw(new CollatorOverlayGraphics(annotatedDataBlock));
 		annotatedDataBlock.SetLogging(new CollatorExtendedLogging(collatorControl, annotatedDataBlock));
 		addOutputDataBlock(annotatedDataBlock);
-		
-		
-		
 		
 	}
 	
@@ -123,6 +123,46 @@ public class CollatorProcess extends PamProcess {
  		
  		//System.out.println("Adding annotation for "+newUnit.toString());
 	}
+	
+	public void addClickDetectionEvent(ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections) {
+		ArrayList<PamDataUnit> clickDataUnits = new ArrayList<PamDataUnit>();
+		long eventEndMillis = 0;
+		long eventStartMillis = System.currentTimeMillis();
+		String triggerName = "";
+		int channelBitmap = 0;
+		long startSample = 0;
+		float fs = 0;
+		int durationSamples = 0;
+		String streamName = "Clicks";
+		
+		for(SubdetectionInfo<PamDataUnit> nextSubInfo: lastAddedSubDetections) {
+			clickDataUnits.add(nextSubInfo.getSubDetection());
+			if(nextSubInfo.getSubDetection().getTimeMilliseconds()<eventStartMillis) {
+				eventStartMillis = nextSubInfo.getSubDetection().getTimeMilliseconds();
+			}
+			if(nextSubInfo.getSubDetection().getTimeMilliseconds()>eventEndMillis) {
+				eventEndMillis = nextSubInfo.getSubDetection().getTimeMilliseconds();
+			}
+		}
+		
+		if(lastAddedSubDetections.size()>0) {
+			triggerName = lastAddedSubDetections.get(0).getLongName();
+			channelBitmap = lastAddedSubDetections.get(0).getSubDetection().getChannelBitmap();
+			startSample = lastAddedSubDetections.get(0).getSubDetection().getStartSample();
+			fs = lastAddedSubDetections.get(0).getSubDetection().getParentDataBlock().getSampleRate();
+			durationSamples = lastAddedSubDetections.get(0).getSubDetection().getSampleDuration().intValue();
+			
+		}
+		
+		double[][] phonyWavData = new double[1][0];
+		
+		CollatorTriggerData triggerData = new CollatorTriggerData(eventStartMillis,eventEndMillis,triggerName,clickDataUnits);
+		
+		CollatorDataUnit newAnnotatedUnit = new CollatorDataUnit(eventStartMillis,channelBitmap,startSample,fs,durationSamples,triggerData,streamName,phonyWavData);
+		
+		annotatedDataBlock.addPamData(newAnnotatedUnit);
+		collatorDataBlock.addPamData(newAnnotatedUnit);
+	}
 
 	
 	@Override
@@ -133,6 +173,11 @@ public class CollatorProcess extends PamProcess {
 		SuperDetection du = (SuperDetection) pamDataUnit;
 		PamDataUnit u;
 		ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections = du.getAndResetLastAddedSubDetections();
+		if(lastAddedSubDetections!=null && 
+			lastAddedSubDetections.size()>0 && 
+			(lastAddedSubDetections.get(0).getSubDetection() instanceof ClickDetection)) {
+			addClickDetectionEvent(lastAddedSubDetections);
+		}
 		for(SubdetectionInfo<PamDataUnit> nextInfo : lastAddedSubDetections) {
 			if(annotatedDataBlock.findUnitByUIDandUTC(nextInfo.getSubDetection().getUID(), nextInfo.getSubDetection().getTimeMilliseconds())!=null) {
 				continue;
@@ -275,9 +320,11 @@ public class CollatorProcess extends PamProcess {
 	
 	public void saveWAV(long fs, double[][] wav, long UID) {
 		AudioFormat af = new Wav16AudioFormat(fs, wav.length);
-		WavFileWriter wavFile = new WavFileWriter("C:\\SystemTesting\\Nextimus\\WavtestFolder\\"+String.valueOf(UID)+".wav", af);
-		wavFile.write(wav);
-		wavFile.close();
+		//SelectFolder select = new SelectFolder("Select output folder", 30, true);
+		//select.
+		//WavFileWriter wavFile = new WavFileWriter("C:\\SystemTesting\\Nextimus\\WavtestFolder\\"+String.valueOf(UID)+".wav", af);
+		//wavFile.write(wav);
+		//wavFile.close();
 	}
 
 	
