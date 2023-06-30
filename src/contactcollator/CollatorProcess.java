@@ -118,13 +118,15 @@ public class CollatorProcess extends PamProcess {
 		 }
 		 
 		 
-		 annotatedCollatorUnit.setSpeciesID(ann.toString());
+		annotatedCollatorUnit.setSpeciesID(ann.toString());
  		annotatedDataBlock.addPamData(annotatedCollatorUnit);
  		
  		//System.out.println("Adding annotation for "+newUnit.toString());
 	}
 	
-	public void addClickDetectionEvent(ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections) {
+	public void addClickDetectionEvent(ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections, SuperDetection detGroupDu) {
+		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
+		
 		ArrayList<PamDataUnit> clickDataUnits = new ArrayList<PamDataUnit>();
 		long eventEndMillis = 0;
 		long eventStartMillis = System.currentTimeMillis();
@@ -160,6 +162,8 @@ public class CollatorProcess extends PamProcess {
 		
 		CollatorDataUnit newAnnotatedUnit = new CollatorDataUnit(eventStartMillis,channelBitmap,startSample,fs,durationSamples,triggerData,streamName,phonyWavData);
 		
+		newAnnotatedUnit.setSpeciesID(ann.toString());
+		
 		annotatedDataBlock.addPamData(newAnnotatedUnit);
 		collatorDataBlock.addPamData(newAnnotatedUnit);
 	}
@@ -176,12 +180,13 @@ public class CollatorProcess extends PamProcess {
 		if(lastAddedSubDetections!=null && 
 			lastAddedSubDetections.size()>0 && 
 			(lastAddedSubDetections.get(0).getSubDetection() instanceof ClickDetection)) {
-			addClickDetectionEvent(lastAddedSubDetections);
+			addClickDetectionEvent(lastAddedSubDetections,du);
 		}
 		for(SubdetectionInfo<PamDataUnit> nextInfo : lastAddedSubDetections) {
 			if(annotatedDataBlock.findUnitByUIDandUTC(nextInfo.getSubDetection().getUID(), nextInfo.getSubDetection().getTimeMilliseconds())!=null) {
 				continue;
 			}
+			//System.out.println(nextInfo.getSubDetection().getClass());
 			addSubDetection(nextInfo.getSubDetection(),du);
 		}
 		
