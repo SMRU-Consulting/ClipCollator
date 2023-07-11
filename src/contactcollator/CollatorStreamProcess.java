@@ -14,7 +14,6 @@ import PamguardMVC.PamObservable;
 import PamguardMVC.PamObserver;
 import PamguardMVC.PamProcess;
 import PamguardMVC.PamRawDataBlock;
-import PamguardMVC.RawDataUnavailableException;
 import PamguardMVC.dataSelector.DataSelector;
 import clickDetector.ClickDetection;
 import clipgenerator.ClipDataUnit;
@@ -140,15 +139,9 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 			// sort out all the data we'll be wanting and send or update output. Probably need to decimate it, etc. 
 			// can we block the datablock here ? Or do I need to clone the clone ? 
 			ArrayList<RawDataUnit> cloneCopy = null;
-			/*synchronized (rawDataCopy.getSynchLock()) {
+			synchronized (rawDataCopy.getSynchLock()) {
 				cloneCopy = rawDataCopy.getDataCopy();
-			}*/
-			
-			/*synchronized (rawDataBlock.getSynchLock()) {
-				cloneCopy = rawDataBlock.getDataCopy();
-			}*/
-			
-			
+			}
 			/* 
 			 * that's safe ! Freed copy, can now take time decimating those data, etc. though note that this may 
 			 * still block the trigger data thread if the next stage takes more than a second or two, to may need 
@@ -217,39 +210,95 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		/**
 		 * Stretch the start and end times slightly if they fit within the max length
 		 */
-		/*if (cloneCopy.size() == 0) {
+		if (cloneCopy.size() == 0) {
 			return null;
-		}*/
-		long triggerEndTime = trigger.getEndTime();
-		long triggerStartTime = trigger.getStartTime();
-		long triggerDurationMillis = triggerEndTime-triggerStartTime;
-		int triggerDurationSamples = (int) (fs*triggerDurationMillis/1000);
-		long triggerStartSample = trigger.getDataList().get(0).getStartSample();
-		long triggerEndSample = triggerStartSample+triggerDurationSamples;
-		//long wavEnd = cloneCopy.get(cloneCopy.size()-1).getEndTimeInMilliseconds();
-		//long wavStart = cloneCopy.get(0).getTimeMilliseconds();
-		//long wavLength = wavEnd-wavStart;
-		long bufferSamples = (long) (parameterSet.minClipLengthS*fs)-(triggerDurationSamples);
-		if(bufferSamples<0) {
-			bufferSamples = (long) (parameterSet.outputClipLengthS*fs)-(triggerDurationSamples);
 		}
-		long prePost = (long) bufferSamples/2;
-		
-		long clipStartSample = triggerStartSample-prePost;
-		long clipEndSample = triggerEndSample+prePost;
-		
-		int clipDurationSamples = (int) (clipEndSample-clipStartSample);
-		
-		long clipStartMillis = triggerStartTime-(long)(1000*prePost/fs);
-		
-		try {
-			wavData = rawDataBlock.getSamples(clipStartSample, clipDurationSamples, channelMap);
+		long selectEnd = trigger.getEndTime();
+		long selectStart = trigger.getStartTime();
+		long wavEnd = cloneCopy.get(cloneCopy.size()-1).getEndTimeInMilliseconds();
+		long wavStart = cloneCopy.get(0).getTimeMilliseconds();
+		long wavLength = wavEnd-wavStart;
+		long addTimeForMin = (long) (parameterSet.minClipLengthS*1000)-(selectEnd-selectStart);
+		long detectionLength = selectEnd-selectStart;
+		if (wavEnd > selectEnd) {
+			if(addTimeForMin<=0) {
+				selectEnd += (selectEnd-selectStart)/5;
+			}else {
+				selectEnd = selectEnd + (long) (addTimeForMin/2);
+			}
+			selectEnd = Math.min(selectEnd, wavEnd);
 		}
-		catch (RawDataUnavailableException e) {
-			e.printStackTrace();
-			wavData[0] = new double[] {0};
+		if (wavStart < selectStart) {
+			if(addTimeForMin<=0) {
+				selectStart = selectStart - (long) (selectEnd-selectStart)/5;
+			}else {
+				selectStart = selectStart - (long) (addTimeForMin/2);
+			}
 		}
-//		
+		selectStart = Math.max(selectStart, selectEnd-(long)(parameterSet.outputClipLengthS*1000));
+//		selectStart = wavStart;
+//		selectEnd = wavEnd;
+		// allocate more data than we need, then trim it down later. 
+		int allocatedSamples = (int) ((selectEnd-selectStart) * fs / 1000.);
+		if (allocatedSamples <= 0) {
+			return null;
+		}
+//		System.out.printf("Extract %d ms from %dms available for output to %d samples\n", selectEnd-selectStart, wavEnd-wavStart, allocatedSamples);
+		for (int i = 0; i < nChan; i++) {
+			wavData[i] = new double[allocatedSamples]; 
+		}
+		int[] channelSamples = new int[nChan];
+		RawDataUnit decimatedData = null;
+		double[] raw = null;
+		long clipStartMillis = -1;
+		long clipStartSample = -1;
+//		if (decimator != null) {
+//			decimator.
+//		}
+		for (RawDataUnit rawUnit : cloneCopy) {
+			if (rawUnit.getEndTimeInMilliseconds() < selectStart) {
+				continue;
+			}
+			if (rawUnit.getTimeMilliseconds() > selectEnd) {
+				break;
+			}
+			int rawChan = PamUtils.getSingleChannel(rawUnit.getChannelBitmap());
+			int iChan = PamUtils.getChannelPos(rawChan, channelMap);
+			if (iChan < 0) {
+				continue;
+			}
+
+			if (decimator != null) {
+				decimatedData = decimator.process(rawUnit);
+				raw = decimatedData.getRawData();
+			}
+			else {
+				raw = rawUnit.getRawData();
+			}
+			if (clipStartMillis < 0) {
+				clipStartMillis = rawUnit.getTimeMilliseconds();
+				clipStartSample = rawUnit.getStartSample();
+			}
+			int newLength = channelSamples[iChan] + raw.length;
+			if (newLength > wavData[iChan].length) {
+				wavData[iChan] = Arrays.copyOf(wavData[iChan], newLength);
+			}
+			System.arraycopy(raw, 0, wavData[iChan], channelSamples[iChan], raw.length);
+			channelSamples[iChan] += raw.length;
+		}
+		// now check the final lengths of the arrays. Very likely one or other of these will get called. 
+		for (int i = 0; i < nChan; i++) {
+			if (channelSamples[i] > allocatedSamples) {
+				// keep the end, skip the start
+				int skipSamples = channelSamples[i]-allocatedSamples;
+				clipStartMillis += skipSamples * 1000.0 / fs;
+				wavData[i] = Arrays.copyOfRange(wavData[i], channelSamples[i]-allocatedSamples, channelSamples[i]);
+			}
+			else if (channelSamples[i] < allocatedSamples) {
+				// keep the start
+				wavData[i] = Arrays.copyOf(wavData[i], channelSamples[i]);
+			}
+		}
 		
 		CollatorDataUnit newData = new CollatorDataUnit(clipStartMillis, channelMap, clipStartSample, parameterSet.outputSampleRate, wavData[0].length, trigger, parameterSet.setName, wavData);
 				
