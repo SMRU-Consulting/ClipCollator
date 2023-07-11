@@ -124,17 +124,6 @@ public class CollatorProcess extends PamProcess {
  		//System.out.println("Adding annotation for "+newUnit.toString());
 	}
 	
-	public void addGroup3DLoc(Group3DDataUnit superDu,ConnectedRegionDataUnit crdu) {
-		CollatorDataUnit collatorUnit = collatorDataBlock.findClipFromCRDU(crdu);
-		if(collatorUnit == null) {
-			System.out.println("Can't find collator unit for crdu "+crdu.getUID());
-			return;
-		}
-		collatorUnit.setLocalization3D(superDu);
-		collatorDataBlock.updatePamData(collatorUnit, System.currentTimeMillis());
-		
-	}
-	
 	public void addClickDetectionEvent(ArrayList<SubdetectionInfo<PamDataUnit>> lastAddedSubDetections, SuperDetection detGroupDu) {
 		DataAnnotation ann = detGroupDu.getDataAnnotation(detGroupDu.getNumDataAnnotations()-1);
 		
@@ -197,9 +186,7 @@ public class CollatorProcess extends PamProcess {
 			if(annotatedDataBlock.findUnitByUIDandUTC(nextInfo.getSubDetection().getUID(), nextInfo.getSubDetection().getTimeMilliseconds())!=null) {
 				continue;
 			}
-			if(du instanceof Group3DDataUnit && nextInfo.getSubDetection() instanceof ConnectedRegionDataUnit) {
-				addGroup3DLoc((Group3DDataUnit)du,(ConnectedRegionDataUnit) nextInfo.getSubDetection());
-			}
+			//System.out.println(nextInfo.getSubDetection().getClass());
 			addSubDetection(nextInfo.getSubDetection(),du);
 		}
 		
