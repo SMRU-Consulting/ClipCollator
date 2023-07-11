@@ -253,6 +253,7 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		int firstChanIdx = PamUtils.getLowestChannel(nextClipRequest.unfinishedDataUnit.getChannelBitmap());
 		int firstChanMap = PamUtils.makeChannelMap(new int[]{firstChanIdx});
 		
+		
 		try {
 			wavData = rawDataBlock.getSamples(nextClipRequest.clipStartSample, nextClipRequest.clipDurationSamples, firstChanMap);
 		}
@@ -291,15 +292,11 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 				clipErr = processClipRequest(clipRequest);
 				switch (clipErr) {
 					case 0: // no error - clip should have been created. 
-						System.out.println("Clip created");
 					case RawDataUnavailableException.DATA_ALREADY_DISCARDED:
-						System.out.println("Discarded Data");
 					case RawDataUnavailableException.INVALID_CHANNEL_LIST:
-						System.out.println("Invalid channel list");
 						//					System.out.println("Clip error : " + clipErr);
 						li.remove();
 					case RawDataUnavailableException.DATA_NOT_ARRIVED:
-						System.out.println("Data Not Arrived");
 						continue; // hopefully, will get this next time !
 				}
 			}
@@ -326,6 +323,9 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		CollatorDataUnit unfinishedDataUnit;
 		
 		public ClipRequest(long clipStartSample,int clipDurationSamples,CollatorDataUnit unfinishedDataUnit){
+			if(clipStartSample<0) {
+				clipStartSample=0;
+			}
 			this.clipStartSample = clipStartSample;
 			this.clipDurationSamples = clipDurationSamples;
 			this.unfinishedDataUnit = unfinishedDataUnit;
@@ -338,7 +338,10 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 
 		@Override
 		public long getRequiredDataHistory(PamObservable observable, Object arg) {
-			return 0;
+			long minH = (long) parameterSet.outputClipLengthS;
+			minH += Math.max(3000, 192000/(long)getSampleRate());
+
+			return minH;
 		}
 
 		@Override
