@@ -9,6 +9,8 @@ import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.RawDataHolder;
 import PamguardMVC.RawDataTransforms;
+import PamguardMVC.superdet.SuperDetection;
+import annotation.DataAnnotation;
 import annotation.localise.targetmotion.TMAnnotation;
 import clipgenerator.ClipDataUnit;
 import contactcollator.bearings.BearingSummary;
@@ -286,8 +288,9 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 		
 		ArrayList<PamDataUnit> detectorData = new ArrayList<PamDataUnit>();
 
-		if(trigTimes==null) {
-			return null;
+		if(trigTimes==null || trigTimes.size()==0) {
+			trigTimes = new ArrayList<>();
+			trigTimes.add(this.getTriggerMilliseconds());
 		}
 		
 		synchronized (dataBlock.getSynchLock()) {
@@ -385,6 +388,33 @@ public class CollatorDataUnit extends ClipDataUnit implements RawDataHolder,Clon
 
 	public void setGroup3DDataUnit(Group3DDataUnit group3dDataUnit) {
 		group3DDataUnit = group3dDataUnit;
+	}
+	
+	@Override
+	public void addDataAnnotation(DataAnnotation dataAnnotation) {
+		super.addDataAnnotation(dataAnnotation);
+		if(this.getTriggerDataUnit()!=null) {
+			this.getTriggerDataUnit().addDataAnnotation(dataAnnotation);
+		}
+		
+	}
+	
+	
+	
+	@Override
+	public void addSuperDetection(SuperDetection superDetection) {
+		super.addSuperDetection(superDetection);
+		this.findTriggerData();
+		if(this.getTriggerDataUnit()!=null) {
+			this.getTriggerDataUnit().addSuperDetection(superDetection);
+		}
+		if(PamController.getInstance().getRunMode()==PamController.RUN_PAMVIEW) {
+			//CollatorProcess process = (CollatorProcess) this.getParentDataBlock();
+			//process.addSubDetection(this, superDetection);
+			CollatorControl cont = (CollatorControl) PamController.getInstance().findControlledUnit("Contact Collator");
+			cont.getCollatorProcess().addSubDetection(this, superDetection);
+			int x=0;
+		}
 	}
 
 }
