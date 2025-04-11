@@ -1,5 +1,7 @@
 package contactcollator;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import javax.sound.sampled.AudioFormat;
@@ -8,6 +10,7 @@ import Acquisition.AcquisitionControl;
 import Array.ArrayManager;
 import PamController.PamControlledUnit;
 import PamController.PamController;
+import PamUtils.PamCalendar;
 import PamUtils.PamUtils;
 import PamView.symbol.StandardSymbolManager;
 import PamguardMVC.PamDataBlock;
@@ -27,6 +30,7 @@ import contactcollator.swing.CollatorOverlayGraphics;
 import detectiongrouplocaliser.DetectionGroupDataUnit;
 import group3dlocaliser.Group3DDataUnit;
 import wavFiles.Wav16AudioFormat;
+import wavFiles.WavFileWriter;
 import whistlesAndMoans.ConnectedRegionDataUnit;
 import clipgenerator.ClipOverlayGraphics;
 import clipgenerator.clipDisplay.ClipSymbolManager;
@@ -287,13 +291,16 @@ public class CollatorProcess extends PamProcess {
 		return collatorDataBlock;
 	}
 	
-	public void saveWAV(long fs, double[][] wav, long UID) {
-		AudioFormat af = new Wav16AudioFormat(fs, wav.length);
-		//SelectFolder select = new SelectFolder("Select output folder", 30, true);
-		//select.
-		//WavFileWriter wavFile = new WavFileWriter("C:\\SystemTesting\\Nextimus\\WavtestFolder\\"+String.valueOf(UID)+".wav", af);
-		//wavFile.write(wav);
-		//wavFile.close();
+	public void saveWAV(long fs, double[][] wav, long UID, String identifier) {
+		String pgHome = pamguard.Pamguard.getSettingsFolder();
+		File clipStore = Paths.get(pgHome,"Saved Clips").toFile();
+		if(!clipStore.exists()) {
+			clipStore.mkdir();
+		}
+		String filePrefix = String.valueOf(UID)+"_"+identifier+"_";
+		String fileName = PamCalendar.createFileName(System.currentTimeMillis(), filePrefix, ".wav");
+		String fullFilePath = Paths.get(clipStore.toString(),fileName).toString();
+		WavFileWriter.write(fullFilePath, fs, wav);
 	}
 
 	
