@@ -68,8 +68,17 @@ public class CollatorDataBlock extends ClipDisplayDataBlock<CollatorDataUnit> {
 				menuItem.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
-						long fs = (long) collatorDataUnit.getTriggerData().getDataList().get(0).getParentDataBlock().getSampleRate();
-						collatorProcess.saveWAV(fs, collatorDataUnit.getRawData(),collatorDataUnit.getUID());
+						try {
+							long fs = (long) collatorProcess.getStreamProcesses().get(0).getSourceDataBlock().getSampleRate();
+							String annotation = collatorDataUnit.getAnnotationsSummaryString();
+							if(annotation==null) {
+								annotation = "unannotated";
+							}
+							collatorProcess.saveWAV(fs, collatorDataUnit.getRawData(),collatorDataUnit.getUID(),annotation);
+						}catch(Exception e) {
+							
+						}
+						
 					}
 				});
 			}
