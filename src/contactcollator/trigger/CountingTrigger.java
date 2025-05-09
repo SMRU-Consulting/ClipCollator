@@ -25,7 +25,7 @@ public class CountingTrigger implements CollatorTrigger {
 
 	@Override
 	public CollatorTriggerData newData(PamDataUnit dataUnit) {
-		if(this.inActiveTriggerState) {
+		if(this.inActiveTriggerState && history.size()>0) {
 			if(!shouldStayInTriggerState(dataUnit)) {
 				clearListTo(dataUnit.getTimeMilliseconds());
 				this.inActiveTriggerState = false;
