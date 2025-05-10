@@ -57,7 +57,7 @@ public class CollatorClipDisplayPanel extends ClipDisplayPanel{
 	}
 	
 	@Override
-	protected boolean shouldChannelFilter(ClipDisplayUnit dataUnit) {
+	protected boolean shouldAllowChannel(ClipDisplayUnit dataUnit) {
 		if(this.collatorStreamProcess==null) {
 			return true;
 		}

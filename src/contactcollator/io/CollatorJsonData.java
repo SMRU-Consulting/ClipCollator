@@ -4,11 +4,11 @@ import jsonStorage.JSONObjectData;
 
 public class CollatorJsonData extends JSONObjectData{
 	
-	double[] wavData;
+	short[] wavData;
 	float wavFs;
 	double centerBearingDegrees;
 	double bearingGroupStdDevDegrees;
-	String speciedAnnotation;
+	String speciesAnnotation;
 	String buoyId;
 	double lowFrequency;
 	double highFrequency;

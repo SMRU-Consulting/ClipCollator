@@ -19,8 +19,8 @@ public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonDat
 		
 		CollatorDataUnit newUnit = (CollatorDataUnit) pamDataUnit;
 		objectData.buoyId = getpbId(newUnit.getChannelBitmap());
-		objectData.wavData = newUnit.getWaveData()[0];
-		objectData.wavFs = newUnit.getSourceSampleRate();
+		objectData.wavData = newUnit.getDataTransforms().getShortWaveData(0);
+		objectData.wavFs = newUnit.getDisplaySampleRate();
 		if(newUnit.getBearingSummaryLocalisation()!=null) {
 			objectData.centerBearingDegrees = newUnit.getBearingSummaryLocalisation().getRealWorldVectors()[0].getHeading();
 			if(newUnit.getBearingSummaryLocalisation().getBearingSummary()!=null) {
@@ -37,6 +37,12 @@ public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonDat
 			objectData.detectionCount = triggerData.getDataList().size();
 			//newUnit.getHeadingHistogram().getData();
 		}
+		if(newUnit.getSpeciesID()!=null) {
+			objectData.speciesAnnotation = newUnit.getSpeciesID();
+		}else {
+			objectData.speciesAnnotation = "not annotated";
+		}
+		
 		//newUnit.
 		
 	}
