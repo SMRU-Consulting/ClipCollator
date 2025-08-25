@@ -10,7 +10,7 @@ import jsonStorage.JSONObjectDataSource;
 public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonData>{
 	
 	public CollatorJsonDataSource() {
-		super();
+		super(false);
 		objectData = new CollatorJsonData();
 	}
 
@@ -20,15 +20,19 @@ public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonDat
 		CollatorDataUnit newUnit = (CollatorDataUnit) pamDataUnit;
 		objectData.buoyId = getpbId(newUnit.getChannelBitmap());
 		objectData.wavData = newUnit.getDataTransforms().getShortWaveData(0);
-		objectData.wavFs = newUnit.getDisplaySampleRate();
+		objectData.wavFs = newUnit.getRawDataSampleRate();
+		//objectData.wavFs = newUnit.getTriggerDataUnit().getParentDataBlock().getSampleRate();
+		objectData.wavScalingFactor = (int) Math.pow(2, 15);
 		if(newUnit.getBearingSummaryLocalisation()!=null) {
 			objectData.centerBearingDegrees = newUnit.getBearingSummaryLocalisation().getRealWorldVectors()[0].getHeading();
 			if(newUnit.getBearingSummaryLocalisation().getBearingSummary()!=null) {
 				objectData.stdRadians = newUnit.getBearingSummaryLocalisation().getBearingSummary().getStdHeading();
 			}
 		}
-		objectData.lowFrequency = newUnit.getFrequency()[0];
-		objectData.highFrequency = newUnit.getFrequency()[1];
+		objectData.lowFrequency = newUnit.getTriggerData().getDataList().get(0).getFrequency()[0];
+		//objectData.lowFrequency = newUnit.getTriggerDataUnit().getFrequency()[0];
+		objectData.highFrequency = newUnit.getTriggerData().getDataList().get(0).getFrequency()[1];
+		//objectData.highFrequency = newUnit.getTriggerDataUnit().getFrequency()[1];
 		objectData.triggerSource = newUnit.triggerName;
 		CollatorTriggerData triggerData = newUnit.findTriggerData();
 		if(triggerData!=null && triggerData.getDataList().size()>0) {

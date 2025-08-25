@@ -330,7 +330,9 @@ public class CollatorStreamProcess extends PamProcess implements ClipDisplayPare
 		}
 
 		CollatorDataUnit newData = new CollatorDataUnit(clipStartMillis, channelMap, clipStartSample, parameterSet.outputSampleRate, wavLength, trigger, parameterSet.setName, wavData);
-				
+		
+		newData.setRawDataSampleRate(this.rawDataBlock.getSampleRate());
+		
 		return newData;
 	}
 

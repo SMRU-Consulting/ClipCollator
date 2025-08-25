@@ -6,17 +6,17 @@ public class CollatorJsonData extends JSONObjectData{
 	
 	short[] wavData;
 	float wavFs;
+	int wavScalingFactor;
+	
 	double centerBearingDegrees;
-	double bearingGroupStdDevDegrees;
-	String speciesAnnotation;
+	public double stdRadians;
 	String buoyId;
 	double lowFrequency;
 	double highFrequency;
-	public double stdRadians;
 	public String triggerSource;
 	public long startTime;
 	public long endTime;
 	public int detectionCount;
-	
+	String speciesAnnotation;
 
 }
