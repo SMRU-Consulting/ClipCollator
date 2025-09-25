@@ -2,12 +2,16 @@ package contactcollator.io;
 
 import Array.ArrayManager;
 import Array.Streamer;
+import PamguardMVC.DataUnitBaseData;
+import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import contactcollator.CollatorDataUnit;
 import contactcollator.trigger.CollatorTriggerData;
+import jsonStorage.JSONDataStorageException;
+import jsonStorage.JSONObjectData;
 import jsonStorage.JSONObjectDataSource;
 
-public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonData>{
+public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonData,CollatorDataUnit>{
 	
 	public CollatorJsonDataSource() {
 		super(false);
@@ -15,7 +19,7 @@ public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonDat
 	}
 
 	@Override
-	protected void addClassSpecificFields(PamDataUnit pamDataUnit) {
+	protected void sourceClassSpecificFields(PamDataUnit pamDataUnit) {
 		
 		CollatorDataUnit newUnit = (CollatorDataUnit) pamDataUnit;
 		objectData.buoyId = getpbId(newUnit.getChannelBitmap());
@@ -63,6 +67,30 @@ public class CollatorJsonDataSource extends JSONObjectDataSource<CollatorJsonDat
 	@Override
 	protected void setObjectType(PamDataUnit pamDataUnit) {
 		objectData.identifier = -1;
+	}
+
+	@Override
+	protected CollatorDataUnit generatePamDataUnit(DataUnitBaseData baseData, CollatorJsonData jsonObjectData) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void sinkData(CollatorDataUnit jsonObject, PamDataBlock pamDataBlock) throws JSONDataStorageException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected CollatorJsonData initializeObjectData() {
+		// TODO Auto-generated method stub
+		return new CollatorJsonData();
+	}
+
+	@Override
+	protected Class<? extends JSONObjectData> getJsonDataSourceObjectClass() {
+		// TODO Auto-generated method stub
+		return CollatorJsonData.class;
 	}
 
 }
